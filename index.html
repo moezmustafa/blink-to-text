@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Morse Code Decoder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #cbd5e1;
+      display: flex;
+      justify-content: center;
+      margin: 0;
+      padding: 40px 20px;
+      font-family: sans-serif;
+    }
+    .paper {
+      background-color: #f8fafc;
+      width: 800px;
+      padding-bottom: 40px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      position: relative;
+      background-image: linear-gradient(#cbd5e1 1px, transparent 1px);
+      background-size: 100% 40px;
+      background-position: 0 0px;
+      border-radius: 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .paper::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 60px;
+      width: 2px;
+      background-color: #f87171;
+      opacity: 0.6;
+      z-index: 0;
+    }
+    svg {
+      margin-top: 20px;
+      width: 100%;
+      height: 560px;
+      z-index: 1;
+    }
+    .node-shape, .line {
+      stroke: #1e3a8a;
+      fill: #f8fafc;
+    }
+    .node-shape {
+      stroke-width: 2.5;
+    }
+    .line {
+      stroke-width: 2;
+    }
+    text {
+      font-family: 'Caveat', cursive;
+      font-size: 26px;
+      fill: #1e3a8a;
+      user-select: none;
+      pointer-events: none;
+    }
+    .node {
+      transition: all 0.2s;
+    }
+    .node.active .node-shape {
+      stroke: #ea580c;
+      stroke-width: 4;
+      fill: #ffedd5;
+    }
+    .controls-container {
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      margin-top: 10px;
+      width: 100%;
+    }
+    #sequence {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 40px;
+      font-weight: bold;
+      color: #ea580c;
+      height: 48px;
+      letter-spacing: 6px;
+    }
+    #press-btn {
+      background: transparent;
+      border: 3px solid #1e3a8a;
+      color: #1e3a8a;
+      font-family: 'Caveat', cursive;
+      font-size: 36px;
+      padding: 10px 80px;
+      cursor: pointer;
+      box-shadow: 5px 5px 0px rgba(30, 58, 138, 0.3);
+      transition: transform 0.1s, box-shadow 0.1s;
+      background-color: #f8fafc;
+      border-radius: 4px;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    #press-btn:active, #press-btn.pressing {
+      transform: translate(3px, 3px);
+      box-shadow: 2px 2px 0px rgba(30, 58, 138, 0.3);
+    }
+    .button-group {
+      display: flex;
+      gap: 20px;
+    }
+    #reset-btn {
+      background: transparent;
+      border: 3px solid #b91c1c;
+      color: #b91c1c;
+      font-family: 'Caveat', cursive;
+      font-size: 32px;
+      padding: 10px 40px;
+      cursor: pointer;
+      box-shadow: 5px 5px 0px rgba(185, 28, 28, 0.2);
+      transition: transform 0.1s, box-shadow 0.1s;
+      background-color: #fef2f2;
+      border-radius: 4px;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    #reset-btn:active {
+      transform: translate(3px, 3px);
+      box-shadow: 2px 2px 0px rgba(185, 28, 28, 0.2);
+    }
+    #output-container {
+      width: 80%;
+      max-width: 600px;
+      border: 3px solid #1e3a8a;
+      padding: 10px;
+      background-color: #f8fafc;
+      box-shadow: 3px 3px 0px rgba(30, 58, 138, 0.1);
+      margin-top: 10px;
+    }
+    #output {
+      width: 100%;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 28px;
+      font-weight: bold;
+      color: #1e3a8a;
+      border: none;
+      background: transparent;
+      text-align: center;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .auto-play-container {
+      display: flex;
+      gap: 15px;
+      width: 80%;
+      max-width: 600px;
+      margin-top: 5px;
+    }
+    #morse-input {
+      flex-grow: 1;
+      padding: 10px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 24px;
+      border: 3px solid #1e3a8a;
+      background-color: #f8fafc;
+      color: #1e3a8a;
+      box-shadow: 3px 3px 0px rgba(30, 58, 138, 0.1);
+      outline: none;
+      font-weight: bold;
+    }
+    #play-btn {
+      background: transparent;
+      border: 3px solid #16a34a;
+      color: #16a34a;
+      font-family: 'Caveat', cursive;
+      font-size: 28px;
+      padding: 5px 30px;
+      cursor: pointer;
+      box-shadow: 4px 4px 0px rgba(22, 163, 74, 0.2);
+      transition: transform 0.1s, box-shadow 0.1s;
+      background-color: #f0fdf4;
+      border-radius: 4px;
+    }
+    #play-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px rgba(22, 163, 74, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="paper">
+    <svg xmlns="http://www.w3.org/2000/svg">
+      <g id="lines">
+        <line x1="400" y1="80" x2="400" y2="120" class="line" />
+        <line x1="160" y1="120" x2="730" y2="120" class="line" />
+        
+        <line x1="250" y1="120" x2="250" y2="200" class="line"/>
+        <line x1="250" y1="200" x2="160" y2="200" class="line"/>
+        <line x1="250" y1="200" x2="250" y2="270" class="line"/>
+        
+        <line x1="340" y1="120" x2="340" y2="340" class="line"/>
+        <line x1="340" y1="340" x2="160" y2="340" class="line"/>
+        <line x1="250" y1="340" x2="250" y2="410" class="line"/>
+        <line x1="340" y1="340" x2="340" y2="450" class="line"/>
+        <line x1="340" y1="450" x2="290" y2="450" class="line"/>
+        <line x1="340" y1="450" x2="340" y2="520" class="line"/>
+        
+        <line x1="460" y1="120" x2="460" y2="340" class="line"/>
+        <line x1="460" y1="340" x2="640" y2="340" class="line"/>
+        <line x1="460" y1="340" x2="460" y2="410" class="line"/>
+        <line x1="460" y1="410" x2="550" y2="410" class="line"/>
+        <line x1="460" y1="410" x2="460" y2="480" class="line"/>
+        
+        <line x1="550" y1="120" x2="550" y2="200" class="line"/>
+        <line x1="640" y1="120" x2="640" y2="200" class="line"/>
+      </g>
+      
+      <g id="node-Blink" class="node active">
+        <rect x="350" y="40" width="100" height="40" rx="4" class="node-shape" />
+        <text x="400" y="66" text-anchor="middle">Blink</text>
+      </g>
+      
+      <!-- Left Side Nodes -->
+      <g id="node-O" class="node"><rect x="142" y="108" width="36" height="24" class="node-shape"/><text x="160" y="100" text-anchor="middle">O</text></g>
+      <g id="node-M" class="node"><rect x="232" y="108" width="36" height="24" class="node-shape"/><text x="250" y="100" text-anchor="middle">M</text></g>
+      <g id="node-T" class="node"><rect x="322" y="108" width="36" height="24" class="node-shape"/><text x="340" y="100" text-anchor="middle">T</text></g>
+      
+      <g id="node-Q" class="node"><rect x="142" y="188" width="36" height="24" class="node-shape"/><text x="160" y="234" text-anchor="middle">Q</text></g>
+      <g id="node-G" class="node"><circle cx="250" cy="200" r="14" class="node-shape"/><text x="274" y="208">G</text></g>
+      <g id="node-Z" class="node"><circle cx="250" cy="270" r="14" class="node-shape"/><text x="274" y="278">Z</text></g>
+      
+      <g id="node-Y" class="node"><rect x="142" y="328" width="36" height="24" class="node-shape"/><text x="160" y="320" text-anchor="middle">Y</text></g>
+      <g id="node-K" class="node"><rect x="232" y="328" width="36" height="24" class="node-shape"/><text x="250" y="320" text-anchor="middle">K</text></g>
+      <g id="node-N" class="node"><circle cx="340" cy="340" r="14" class="node-shape"/><text x="364" y="348">N</text></g>
+      
+      <g id="node-C" class="node"><circle cx="250" cy="410" r="14" class="node-shape"/><text x="274" y="418">C</text></g>
+      <g id="node-X" class="node"><rect x="272" y="438" width="36" height="24" class="node-shape"/><text x="264" y="458" text-anchor="end">X</text></g>
+      <g id="node-D" class="node"><circle cx="340" cy="450" r="14" class="node-shape"/><text x="364" y="458">D</text></g>
+      
+      <g id="node-B" class="node"><circle cx="340" cy="520" r="14" class="node-shape"/><text x="364" y="528">B</text></g>
+
+      <!-- Right Side Nodes -->
+      <g id="node-E" class="node"><circle cx="460" cy="120" r="14" class="node-shape"/><text x="460" y="100" text-anchor="middle">E</text></g>
+      <g id="node-I" class="node"><circle cx="550" cy="120" r="14" class="node-shape"/><text x="550" y="100" text-anchor="middle">I</text></g>
+      <g id="node-S" class="node"><circle cx="640" cy="120" r="14" class="node-shape"/><text x="640" y="100" text-anchor="middle">S</text></g>
+      <g id="node-H" class="node"><circle cx="730" cy="120" r="14" class="node-shape"/><text x="730" y="100" text-anchor="middle">H</text></g>
+
+      <g id="node-U" class="node"><rect x="532" y="188" width="36" height="24" class="node-shape"/><text x="578" y="208">U</text></g>
+      <g id="node-V" class="node"><rect x="622" y="188" width="36" height="24" class="node-shape"/><text x="668" y="208">V</text></g>
+
+      <g id="node-A" class="node"><rect x="442" y="328" width="36" height="24" class="node-shape"/></g> <!-- Unlabeled A -->
+      <g id="node-R" class="node"><circle cx="550" cy="340" r="14" class="node-shape"/><text x="550" y="376" text-anchor="middle">R</text></g>
+      <g id="node-L" class="node"><circle cx="640" cy="340" r="14" class="node-shape"/><text x="664" y="348">L</text></g>
+
+      <g id="node-W" class="node"><rect x="442" y="398" width="36" height="24" class="node-shape"/><text x="434" y="418" text-anchor="end">W</text></g>
+      <g id="node-P" class="node"><circle cx="550" cy="410" r="14" class="node-shape"/><text x="574" y="418">P</text></g>
+
+      <g id="node-J" class="node"><rect x="442" y="468" width="36" height="24" class="node-shape"/><text x="488" y="488">J</text></g>
+    </svg>
+    <div class="controls-container">
+      <div id="sequence"></div>
+      <div class="button-group">
+        <button id="press-btn">Press</button>
+        <button id="reset-btn">Reset</button>
+      </div>
+      <div id="output-container">
+        <input type="text" id="output" placeholder="Decoded message..." readonly />
+      </div>
+      <div class="auto-play-container">
+        <input type="text" id="morse-input" placeholder="Enter morse code (e.g. .... . .-.. .-.. ---)" />
+        <button id="play-btn">Play</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const morseMap = {
+      '.': 'E', '..': 'I', '...': 'S', '....': 'H',
+      '.-': 'A', '..-': 'U', '...-': 'V',
+      '.-.': 'R', '.--': 'W', '.-..': 'L', '.--.': 'P', '.---': 'J',
+      '-': 'T', '--': 'M', '---': 'O',
+      '-.': 'N', '--.': 'G',
+      '-.-': 'K', '--.-': 'Q', '--..': 'Z',
+      '-..': 'D', '-.--': 'Y', '-.-.': 'C',
+      '-...': 'B', '-..-': 'X'
+    };
+
+    let currentSequence = '';
+    let outputText = '';
+    let pressStartTime = 0;
+    let letterTimeoutId = null;
+    let wordTimeoutId = null;
+    let isPressing = false;
+
+    const pressBtn = document.getElementById('press-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const outputDisplay = document.getElementById('output');
+    const sequenceDisplay = document.getElementById('sequence');
+    const morseInput = document.getElementById('morse-input');
+    const playBtn = document.getElementById('play-btn');
+    
+    let isPlaying = false;
+
+    function handlePressStart(e) {
+      if (isPressing || isPlaying) return;
+      e.preventDefault(); 
+      pressBtn.setPointerCapture(e.pointerId);
+      isPressing = true;
+      pressStartTime = Date.now();
+      
+      clearTimeout(letterTimeoutId);
+      clearTimeout(wordTimeoutId);
+      
+      pressBtn.classList.add('pressing');
+    }
+
+    function handlePressEnd(e) {
+      if (!isPressing) return;
+      isPressing = false;
+      pressBtn.releasePointerCapture(e.pointerId);
+      pressBtn.classList.remove('pressing');
+
+      const duration = Date.now() - pressStartTime;
+      const isDash = duration >= 250; 
+      
+      currentSequence += isDash ? '-' : '.';
+      sequenceDisplay.textContent = currentSequence;
+      
+      updateHighlight();
+
+      letterTimeoutId = setTimeout(() => {
+        confirmLetter();
+      }, 700); 
+    }
+
+    function confirmLetter() {
+      const letter = morseMap[currentSequence];
+      if (letter) {
+        outputText += `${letter}(${currentSequence}) `;
+        outputDisplay.value = outputText;
+      } else if (currentSequence === '.-') { 
+        outputText += `A(.-) `;
+        outputDisplay.value = outputText;
+      }
+      
+      currentSequence = '';
+      sequenceDisplay.textContent = '';
+      updateHighlight();
+      
+      wordTimeoutId = setTimeout(() => {
+        outputText += ' ';
+        outputDisplay.value = outputText;
+      }, 800); 
+    }
+
+    function updateHighlight() {
+      document.querySelectorAll('.node').forEach(node => node.classList.remove('active'));
+      
+      if (currentSequence === '') {
+        document.getElementById('node-Blink').classList.add('active');
+        return;
+      }
+
+      const letter = morseMap[currentSequence];
+      if (letter) {
+        const node = document.getElementById('node-' + letter);
+        if (node) node.classList.add('active');
+      } else if (currentSequence === '.-') {
+        const nodeA = document.getElementById('node-A');
+        if (nodeA) nodeA.classList.add('active');
+      }
+    }
+
+    pressBtn.addEventListener('pointerdown', handlePressStart);
+    pressBtn.addEventListener('pointerup', handlePressEnd);
+    pressBtn.addEventListener('pointercancel', handlePressEnd);
+
+    resetBtn.addEventListener('click', () => {
+      isPlaying = false;
+      if (playBtn) playBtn.style.opacity = '1';
+      currentSequence = '';
+      outputText = '';
+      sequenceDisplay.textContent = '';
+      outputDisplay.value = '';
+      clearTimeout(letterTimeoutId);
+      clearTimeout(wordTimeoutId);
+      updateHighlight();
+    });
+
+    updateHighlight();
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    playBtn.addEventListener('click', async () => {
+      if (isPlaying) return;
+      const text = morseInput.value.trim();
+      if (!text) return;
+
+      isPlaying = true;
+      playBtn.style.opacity = '0.5';
+      
+      resetBtn.click();
+      isPlaying = true; 
+      playBtn.style.opacity = '0.5';
+      
+      await sleep(300);
+      
+      const tokens = text.split(/\s+/);
+      
+      for (const token of tokens) {
+        if (!isPlaying) break;
+        if (token === '/' || token === '|') {
+           outputText += ' ';
+           outputDisplay.value = outputText;
+           await sleep(600);
+           continue;
+        }
+
+        currentSequence = '';
+        updateHighlight();
+        await sleep(400);
+
+        for (const char of token) {
+          if (!isPlaying) break;
+          if (char === '.' || char === '-') {
+            currentSequence += char;
+            sequenceDisplay.textContent = currentSequence;
+            updateHighlight();
+            await sleep(500);
+          }
+        }
+        
+        if (!isPlaying) break;
+        
+        const letter = morseMap[currentSequence];
+        if (letter) {
+          outputText += `${letter}(${currentSequence}) `;
+        } else if (currentSequence === '.-') { 
+          outputText += `A(.-) `;
+        } else {
+          outputText += `?(${currentSequence}) `;
+        }
+        outputDisplay.value = outputText;
+        
+        currentSequence = '';
+        sequenceDisplay.textContent = '';
+        updateHighlight();
+        await sleep(600);
+      }
+
+      isPlaying = false;
+      playBtn.style.opacity = '1';
+    });
+  </script>
+</body>
+</html>
