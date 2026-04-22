@@ -17,7 +17,7 @@ The system uses a binary tree where:
 Each input navigates the tree until a valid character is reached.
 
 ## 🌐 Live Demo
-👉 [Add your GitHub Pages link here]
+👉 https://moezmustafa.github.io/blink-to-text/
 
 ## 📦 Tech Stack
 - HTML
